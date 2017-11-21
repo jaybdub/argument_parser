@@ -2,19 +2,20 @@
 #include <exception>
 #include <iostream>
 
+using namespace std;
 
 void test_argument_parser(int argc, char * argv[])
 {
-  ArgumentSet argset;
-  argset.Add(Flag("help", 'h'));
-  argset.Add(PositionalArgument("input"));
-  argset.Add(PositionalArgument("output"));
+  ArgumentSet a;
+  a.Add(new Flag("hello", "Set this to hello.", 'h'));
+  a.Add(new Flag("goodbye", "Set this to goodbye.", 'g'));
+  a.Add(new PositionalArgument("okay"));
+  a.Add(new NamedArgument("bleh", "Set this to blebleh.", 'b'));
+  a.Parse(argc, argv);
 
-//  char * argv[] = { "exe", "-h" }; int argc = sizeof(argv) / 8;
-
-  argset.Parse(argc, argv);
-
-  cout << argset.HelpString() << endl;
+  for (auto arg : a.args) {
+    cout << arg->GetName() << "(" << arg->GetDescription() << "): " << arg->GetValue() << endl;
+  }
 }
 
 int main(int argc, char * argv[])

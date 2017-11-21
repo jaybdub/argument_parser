@@ -1,64 +1,79 @@
-#ifndef ARGUMENT_PARSER_H
-#define ARGUMENT_PARSER_H
+#ifndef ARGUMENT_PARSER_IMP_H
+#define ARGUMENT_PARSER_IMP_H
 
-#include <utility>
-#include <unordered_map>
 #include <string>
-#include <exception>
-#include <sstream>
 #include <vector>
 
 using namespace std;
 
 
-struct Argument
-{
-  const string name;
-  const char shorthand = 0;
+struct Argument {
+
+private:
+  string name;
+  string description = ""; 
+  char shorthand = 0;
+  string value = "";
+
+public:
+  enum Type {
+    FLAG,
+    NAMED,
+    POSITIONAL
+  };
+
+  virtual ~Argument() {};
   Argument(string name) : name(name) {};
-  Argument(string name, char shorthand) : name(name), shorthand(shorthand) {};
-  virtual string HelpString() = 0;
+  Argument(string name, string description) : name(name), description(description) {};
+  Argument(string name, string description, char shorthand) 
+    : name(name), description(description), shorthand(shorthand) {};
+  string GetName() { return name; };
+  string GetDescription() { return description; };
+  string GetValue() { return value; };
+  char GetShorthand() { return shorthand; };
+  virtual Type GetType() = 0;
+  void SetValue(string value) { this->value = value; };
 };
 
-struct Flag : public Argument
-{
+
+struct Flag : public Argument {
   Flag(string name) : Argument(name) {};
-  Flag(string name, char shorthand) : Argument(name, shorthand) {};
-  bool set = false;
-  string HelpString();
+  Flag(string name, string description) : Argument(name, description) {};
+  Flag(string name, string description, char shorthand) 
+    : Argument(name, description, shorthand) {};
+  Type GetType() override { return FLAG; };
 };
 
-struct NamedArgument : public Argument
-{
+
+struct NamedArgument : public Argument {
   NamedArgument(string name) : Argument(name) {};
-  NamedArgument(string name, char shorthand) : Argument(name, shorthand) {};
-  string value;
-  string HelpString();
-};
-
-struct PositionalArgument : public Argument
-{
-  PositionalArgument(string name) : Argument(name, shorthand) {};
-  string value;
-  string HelpString();
-};
-
-struct ArgumentSet
-{
-  vector<PositionalArgument> positionalArguments;
-  vector<NamedArgument> namedArguments;
-  vector<Flag> flags;
-  void Parse(int argc, char **argv);
-  string HelpString();
-  ArgumentSet & Add(Flag arg);
-  ArgumentSet & Add(NamedArgument arg);
-  ArgumentSet & Add(PositionalArgument arg);
-  ArgumentSet & AddFlag(Flag flag);
-  ArgumentSet & AddNamedArgument(NamedArgument arg);
-  ArgumentSet & AddPositionalArgument(PositionalArgument arg);
-  bool ShorthandTaken(char shorthand);
-  bool NameTaken(string name);
+  NamedArgument(string name, string description) : Argument(name, description) {};
+  NamedArgument(string name, string description, char shorthand) 
+    : Argument(name, description, shorthand) {};
+  Type GetType() override { return NAMED; };
 };
 
 
-#endif  // ARGUMENT_PARSER_H
+struct PositionalArgument : public Argument {
+  PositionalArgument(string name) : Argument(name) {};
+  PositionalArgument(string name, string description) : Argument(name, description) {};
+  PositionalArgument(string name, string description, char shorthand) 
+    : Argument(name, description, shorthand) {};
+  Type GetType() override { return POSITIONAL; };
+};
+
+
+struct ArgumentSet {
+  vector<Argument*> args;
+  ~ArgumentSet();
+  void Add(Argument *arg);
+  void Parse(int argc, char * argv[]);
+  bool HasName(string name);
+  bool HasShorthand(char shorthand);
+  Argument * GetPositionalArgument(size_t pos);
+  Argument * GetArgument(string name);
+  Argument * GetArgument(char shorthand);
+};
+
+
+#endif

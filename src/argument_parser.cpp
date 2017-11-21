@@ -1,252 +1,107 @@
 #include "argument_parser.h"
+#include <stdexcept>
+
+using namespace std;
+
+ArgumentSet::~ArgumentSet() {
+  for (auto arg : args)
+    delete arg;
+}
+
+bool ArgumentSet::HasName(string name) {
+  for (auto arg : args)
+    if (name == arg->GetName())
+      return true;
+  return false;
+}
 
 
-void ArgumentSet::Parse(int argc, char **argv)
-{
+bool ArgumentSet::HasShorthand(char shorthand) {
+  for (auto arg : args)
+    if (arg->GetShorthand() != 0 && shorthand == arg->GetShorthand())
+      return true;
+  return false;
+}
 
-  enum State
-  {
-    DEFAULT = 0,
-    NAMED_VALUE = 1
-  };
 
-  State state = DEFAULT;
-  int i = 1;
-  int positionalIndex = 0;
-  NamedArgument * namedArgument;
+void ArgumentSet::Add(Argument *arg) {
+  if (HasShorthand(arg->GetShorthand()))
+    throw std::runtime_error("Argument shorthand taken.");
+  if (HasName(arg->GetName()))
+    throw std::runtime_error("Argument name taken.");
+  args.push_back(arg);
+}
 
-  while (i < argc)
-  {
+Argument * ArgumentSet::GetPositionalArgument(size_t pos) {
+  size_t count = 0;
 
-    string entry = string(argv[i]);
+  for (auto a : args) {
+    if (a->GetType() == Argument::POSITIONAL && count == pos)
+      return a;
+    if (a->GetType() == Argument::POSITIONAL)
+      count++;
+  }
 
-    if (state == DEFAULT)
-    {
-      // check if positional
-      if (entry[0] != '-')
-      {
-        if (positionalIndex < positionalArguments.size())
-          positionalArguments[positionalIndex++].value = entry;
-        else
+  return nullptr;
+}
+
+Argument * ArgumentSet::GetArgument(string name) {
+  for (auto a : args)
+    if (a->GetName() == name)
+      return a;
+  return nullptr;
+}
+
+Argument * ArgumentSet::GetArgument(char shorthand) {
+  for (auto a : args)
+    if (a->GetShorthand() == shorthand)
+      return a;
+  return nullptr;
+}
+
+void ArgumentSet::Parse(int argc, char * argv[]) {
+  int isValue = 0;
+  int pos = 0;
+  Argument *a = nullptr;
+
+  for (int i = 1; i < argc; i++) {
+    string entry = argv[i];
+    if (!isValue) { 
+      if (entry[0] != '-') {
+        a = GetPositionalArgument(pos++);
+        if (a == nullptr)
           throw runtime_error("Too many positional arguments.");
-      }
-      else if (entry[1] != '-')
-      {
-        // search for named entry
-        bool isNamed = false;
-        for (auto &e : namedArguments)
-          if (e.shorthand == entry[1] && entry.length() == 2)
-          {
-            isNamed = true;
-            namedArgument = &e;
+        a->SetValue(entry);
+      } else if (entry[1] != '-') {        
+        a = GetArgument(entry[1]);
+        if (a == nullptr)
+          throw runtime_error("Invalid argument shorthand.");
+        if (a->GetType() == Argument::FLAG) {
+          a->SetValue("1");
+          // parse additional flags
+          for (auto c : entry.substr(2, entry.length() - 2)) {
+            a = GetArgument(c);
+            if (a == nullptr)
+              throw runtime_error("Invalid argument shorthand.");
+            if (a->GetType() != Argument::FLAG)
+              throw runtime_error("Shorthand is not for flag.");
+            a->SetValue("1");
           }
-
-        // continue to next if it is a named entry
-        if (isNamed)
-        {
-          state = NAMED_VALUE;
+        } else {
+          isValue = 1;
         }
+      } else {
+        a = GetArgument(entry.substr(2, entry.length() - 2));
+        if (a == nullptr)
+          throw runtime_error("Invalid argument name.");
+        if (a->GetType() == Argument::FLAG)
+          a->SetValue("1");
         else
-        {
-          // set all matching flags
-          for (auto &c : entry.substr(1, entry.length() - 1))
-          {
-            bool isFlag = false;
-            for (auto &f : flags) {
-              if (c == f.shorthand) {
-                f.set = true;
-                isFlag = true;
-                break;
-              }
-            }
-            if (!isFlag)
-              throw runtime_error("Flag does not exist.");
-          }
-        }
+          isValue = 1;
       }
-      else
-      {
-        string longhand = entry.substr(2, entry.length() - 2);
-        // search named
-        bool isNamed = false;
-        for (auto &e : namedArguments)
-        {
-          if (e.name == longhand) {
-            isNamed = true;
-            namedArgument = &e;
-            break;
-          }
-        }
-        if (isNamed)
-        {
-          state = NAMED_VALUE;
-        }
-        else
-        {
-          bool isFlag = false;
-          for (auto &f : flags)
-            if (f.name == longhand) {
-              isFlag = true;
-              f.set = true;
-            }
-          if (!isFlag)
-            throw runtime_error("Flag does not exist.");
-        }
-      }
+    } else {
+      a->SetValue(entry);
+      isValue = 0;
     }
-    else {
-      namedArgument->value = entry;
-      state = DEFAULT;
-    }
-
-    i++;
-  } // while
-
-}
-
-
-string PositionalArgument::HelpString()
-{
-
-  string str;
-  str += name;
-  str += "\t";
-  if (value.length() > 0)
-    str += "\t(" + value + ")";
-  return str;
-}
-
-
-string NamedArgument::HelpString()
-{
-  string str;
-  str += name;
-  str += "\t";
-  if (shorthand)
-    str += "-" + string(&shorthand, 1);
-  str += "\t";
-  str += "--" + name;
-  if (value.length() > 0)
-    str += "\t(" + value + ")";
-  return str;
-}
-
-
-string Flag::HelpString()
-{
-  string str;
-  str += name;
-  str += "\t";
-  if (shorthand)
-    str += "-" + string(&shorthand, 1);
-  str += "\t";
-  str += "--" + name;
-  str += "\t";
-  if (set)
-    str += "(ACTIVE)";
-  return str;
-}
-
-
-string ArgumentSet::HelpString()
-{
-  string helpString;
-  if(positionalArguments.size() > 0)
-    helpString += "\n\nPOSITIONAL ARGUMENTS\n";
-  for (auto &a : positionalArguments)
-    helpString += "\n" + a.HelpString();
-  if(namedArguments.size() > 0)
-    helpString += "\n\nNAMED ARGUMENTS\n";
-  for (auto &a : namedArguments)
-    helpString += "\n\n" + a.HelpString();
-  if(flags.size() > 0)
-    helpString += "\n\nFLAGS\n";
-  for (auto &a : flags)
-    helpString += "\n" + a.HelpString();
-
-  return helpString;
-}
-
-ArgumentSet & ArgumentSet::Add(Flag arg)
-{
-  return AddFlag(arg);
-};
-
-
-ArgumentSet & ArgumentSet::Add(NamedArgument arg)
-{
-  return AddNamedArgument(arg);
-};
-
-
-ArgumentSet & ArgumentSet::Add(PositionalArgument arg) {
-  return AddPositionalArgument(arg);
-};
-
-
-ArgumentSet & ArgumentSet::AddFlag(Flag flag)
-{
-  if (ShorthandTaken(flag.shorthand))
-    throw runtime_error("Shorthand taken.");
-  if (NameTaken(flag.name))
-    throw runtime_error("Name taken.");
-
-  flags.push_back(flag);
-  return *this;
-}
-
-
-ArgumentSet & ArgumentSet::AddNamedArgument(NamedArgument arg)
-{
-  if (ShorthandTaken(arg.shorthand))
-    throw runtime_error("Shorthand taken.");
-  if (NameTaken(arg.name))
-    throw runtime_error("Name taken.");
-
-  namedArguments.push_back(arg);
-  return *this;
-}
-
-
-ArgumentSet & ArgumentSet::AddPositionalArgument(PositionalArgument arg)
-{
-  if (ShorthandTaken(arg.shorthand))
-    throw runtime_error("Shorthand taken.");
-  if (NameTaken(arg.name))
-    throw runtime_error("Name taken.");
-
-  positionalArguments.push_back(arg);
-  return *this;
-}
-
-
-bool ArgumentSet::ShorthandTaken(char shorthand)
-{
-  for (auto &a : positionalArguments)
-    if (a.shorthand != 0 && a.shorthand == shorthand)
-      return true;
-  for (auto &a : namedArguments)
-    if (a.shorthand != 0 && a.shorthand == shorthand)
-      return true;
-  for (auto &a : flags)
-    if (a.shorthand != 0 && a.shorthand == shorthand)
-      return true;
-
-  return false;
-}
-
-
-bool ArgumentSet::NameTaken(string name)
-{
-  for (auto &a : positionalArguments)
-    if (a.name == name)
-      return true;
-  for (auto &a : namedArguments)
-    if (a.name == name)
-      return true;
-  for (auto &a : flags)
-    if (a.name == name)
-      return true;
-
-  return false;
+  } 
 }
