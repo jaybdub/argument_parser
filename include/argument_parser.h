@@ -13,16 +13,8 @@ using namespace std;
 
 struct Argument
 {
-  enum ArgumentType {
-    DEFAULT,
-    FLAG,
-    NAMED,
-    POSITIONAL
-  };
-
   const string name;
   const char shorthand = 0;
-  static const ArgumentType type = DEFAULT;
   Argument(string name) : name(name) {};
   Argument(string name, char shorthand) : name(name), shorthand(shorthand) {};
   virtual string HelpString() = 0;
@@ -30,7 +22,6 @@ struct Argument
 
 struct Flag : public Argument
 {
-  static const ArgumentType type = FLAG;
   Flag(string name) : Argument(name) {};
   Flag(string name, char shorthand) : Argument(name, shorthand) {};
   bool set = false;
@@ -39,7 +30,6 @@ struct Flag : public Argument
 
 struct NamedArgument : public Argument
 {
-  static const ArgumentType type = NAMED;
   NamedArgument(string name) : Argument(name) {};
   NamedArgument(string name, char shorthand) : Argument(name, shorthand) {};
   string value;
@@ -48,7 +38,6 @@ struct NamedArgument : public Argument
 
 struct PositionalArgument : public Argument
 {
-  static const ArgumentType type = POSITIONAL;
   PositionalArgument(string name) : Argument(name, shorthand) {};
   string value;
   string HelpString();
