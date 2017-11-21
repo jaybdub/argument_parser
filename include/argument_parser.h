@@ -9,11 +9,12 @@ using namespace std;
 
 struct Argument {
 
-private:
+protected:
   string name;
   string description = ""; 
   char shorthand = 0;
   string value = "";
+  string defaultValue = "";
 
 public:
   enum Type {
@@ -41,15 +42,20 @@ public:
     this->description = description; 
     return *this;
   };
+  Argument & Default(string value) {
+    this->defaultValue = value;
+    this->value = value;
+    return *this;
+  }
 
 };
 
 
 struct Flag : public Argument {
-  Flag(string name) : Argument(name) {};
-  Flag(string name, string description) : Argument(name, description) {};
+  Flag(string name) : Argument(name) { value = "0"; };
+  Flag(string name, string description) : Argument(name, description) { value = "0";};
   Flag(string name, string description, char shorthand) 
-    : Argument(name, description, shorthand) {};
+    : Argument(name, description, shorthand) { value = "0"; };
   Type GetType() override { return FLAG; };
 };
 

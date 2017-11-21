@@ -8,7 +8,8 @@ line arguments.  The syntax for adding command line arguments is as follows.
     args.AddFlag("help").Description("print help menu").Shorthand('h');
     args.AddPositionalArgument("output").Description("output file");
     args.AddFlag("other-flag").Description("other flag").Shorthand('f');
-    args.AddNamedArgument("myarg").Description("my argument").Shorthand('m');
+    args.AddNamedArgument("myarg").Description("my argument").Shorthand('m').Default("default_value");
+    
 
 The program takes arguments using the following format
 
