@@ -1,7 +1,7 @@
 #include "argument_parser.h"
 
 
-void ArgumentSet::ParseArguments(int argc, char * argv[])
+void ArgumentSet::Parse(int argc, char **argv)
 {
 
   enum State
@@ -28,7 +28,7 @@ void ArgumentSet::ParseArguments(int argc, char * argv[])
         if (positionalIndex < positionalArguments.size())
           positionalArguments[positionalIndex++].value = entry;
         else
-          positionalArguments[positionalIndex - 1].value += " " + entry;
+          throw runtime_error("Too many positional arguments.");
       }
       else if (entry[1] != '-')
       {
@@ -104,19 +104,85 @@ void ArgumentSet::ParseArguments(int argc, char * argv[])
 
 }
 
-ArgumentSet & ArgumentSet::AddArgument(Argument * arg)
-{
-  switch (arg->type)
-  {
-  case Argument::FLAG:
 
-    break;
-  case Argument::NAMED:
-    break;
-  case Argument::POSITIONAL:
-    break;
-  }
+string PositionalArgument::HelpString()
+{
+
+  string str;
+  str += name;
+  str += "\t";
+  if (value.length() > 0)
+    str += "\t(" + value + ")";
+  return str;
 }
+
+
+string NamedArgument::HelpString()
+{
+  string str;
+  str += name;
+  str += "\t";
+  if (shorthand)
+    str += "-" + string(&shorthand, 1);
+  str += "\t";
+  str += "--" + name;
+  if (value.length() > 0)
+    str += "\t(" + value + ")";
+  return str;
+}
+
+
+string Flag::HelpString()
+{
+  string str;
+  str += name;
+  str += "\t";
+  if (shorthand)
+    str += "-" + string(&shorthand, 1);
+  str += "\t";
+  str += "--" + name;
+  str += "\t";
+  if (set)
+    str += "(ACTIVE)";
+  return str;
+}
+
+
+string ArgumentSet::HelpString()
+{
+  string helpString;
+  if(positionalArguments.size() > 0)
+    helpString += "\n\nPOSITIONAL ARGUMENTS\n";
+  for (auto &a : positionalArguments)
+    helpString += "\n" + a.HelpString();
+  if(namedArguments.size() > 0)
+    helpString += "\n\nNAMED ARGUMENTS\n";
+  for (auto &a : namedArguments)
+    helpString += "\n\n" + a.HelpString();
+  if(flags.size() > 0)
+    helpString += "\n\nFLAGS\n";
+  for (auto &a : flags)
+    helpString += "\n" + a.HelpString();
+
+  return helpString;
+}
+
+ArgumentSet & ArgumentSet::Add(Flag arg)
+{
+  return AddFlag(arg);
+};
+
+
+ArgumentSet & ArgumentSet::Add(NamedArgument arg)
+{
+  return AddNamedArgument(arg);
+};
+
+
+ArgumentSet & ArgumentSet::Add(PositionalArgument arg) {
+  return AddPositionalArgument(arg);
+};
+
 
 ArgumentSet & ArgumentSet::AddFlag(Flag flag)
 {
