@@ -19,7 +19,12 @@ also,
 
     ./program -h -f --myarg myarg_value output_value
 
-or
+and
+
     ./program output_value
 
-etc.
+or
+    
+    ./program --myarg myarg_value output_value
+    
+etc. 
