@@ -10,6 +10,16 @@ line arguments.  The syntax for adding command line arguments is as follows.
     args.Add(new Flag("other-flag", "set some other flag", 'f'));
     args.Add(new PositionalArgument("output", "the output file", 'o'));
     args.Add(new NamedArgument("myarg", "my optional named argument");
-    args.Parse(argc, argv);
 
-    
+The program takes arguments using the following format
+
+    ./program -hf --myarg myarg_value output_value
+
+also,
+
+    ./program -h -f --myarg myarg_value output_value
+
+or
+    ./program output_value
+
+etc.
