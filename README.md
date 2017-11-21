@@ -12,6 +12,11 @@ line arguments.  The syntax for adding command line arguments is as follows.
     args.AddPositionalArgument("output").Description("output file");
     args.AddFlag("other-flag").Description("other flag").Shorthand('f');
     args.AddNamedArgument("myarg").Description("my argument").Shorthand('m');
+    
+    int main(int argc, char * argv[]) {
+        args.Parse(argc, argv);
+        return 0;
+    }
 ```
 
 The program takes arguments using the following format
@@ -30,10 +35,4 @@ or
     
     ./program --myarg myarg_value output_value
     
-etc.  And the arguments are parsed simply like,
-
-```c++
-    int main(int argc, char * argv[]) {
-        args.Parse(argc, argv);
-        return 0;
-    }
+etc.
