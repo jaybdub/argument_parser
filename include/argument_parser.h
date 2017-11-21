@@ -33,13 +33,13 @@ public:
   char GetShorthand() { return shorthand; };
   virtual Type GetType() = 0;
   void SetValue(string value) { this->value = value; };
-  Argument * Shorthand(char shorthand) { 
+  Argument & Shorthand(char shorthand) { 
     this->shorthand = shorthand;
-    return this; 
+    return *this; 
   };
-  Argument * Description(string shorthand) {
+  Argument & Description(string shorthand) {
     this->description = description; 
-    return this;
+    return *this;
   };
 
 };
@@ -72,19 +72,23 @@ struct PositionalArgument : public Argument {
 };
 
 
-struct ArgumentSet {
+class ArgumentSet {
   vector<Argument*> args;
+  Argument & Add(Argument *arg);
+public:
   ~ArgumentSet();
-  Argument * Add(Argument *arg);
-  Argument * AddFlag(string name);
-  Argument * AddNamedArgument(string name);
-  Argument * AddPositionalArgument(string name);
+  Argument & AddFlag(string name);
+  Argument & AddNamedArgument(string name);
+  Argument & AddPositionalArgument(string name);
   void Parse(int argc, char * argv[]);
   bool HasName(string name);
   bool HasShorthand(char shorthand);
   Argument * GetPositionalArgument(size_t pos);
   Argument * GetArgument(string name);
   Argument * GetArgument(char shorthand);
+  vector<Argument*> & GetArguments() {
+    return args;
+  }
 };
 
 

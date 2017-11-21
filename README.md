@@ -5,11 +5,10 @@ This repository contains a simple C++ header / source file for parsing command
 line arguments.  The syntax for adding command line arguments is as follows.
 
     ArgumentSet args;
-
-    args.Add(new Flag("help", "print help for this program", 'h'));
-    args.Add(new Flag("other-flag", "set some other flag", 'f'));
-    args.Add(new PositionalArgument("output", "the output file", 'o'));
-    args.Add(new NamedArgument("myarg", "my optional named argument");
+    args.AddFlag("help").Description("print help menu").Shorthand('h');
+    args.AddPositionalArgument("output").Description("output file");
+    args.AddFlag("other-flag").Description("other flag").Shorthand('f');
+    args.AddNamedArgument("myarg").Description("my argument").Shorthand('m');
 
 The program takes arguments using the following format
 

@@ -24,28 +24,28 @@ bool ArgumentSet::HasShorthand(char shorthand) {
 }
 
 
-Argument * ArgumentSet::Add(Argument *arg) {
+Argument & ArgumentSet::Add(Argument *arg) {
   if (HasShorthand(arg->GetShorthand()))
     throw std::runtime_error("Argument shorthand taken.");
   if (HasName(arg->GetName()))
     throw std::runtime_error("Argument name taken.");
   args.push_back(arg);
-  return arg;
+  return *arg;
 }
 
-Argument * ArgumentSet::AddFlag(string name) {
+Argument & ArgumentSet::AddFlag(string name) {
   Argument * arg = new Flag(name);
   return Add(arg);
 }
 
 
-Argument * ArgumentSet::AddPositionalArgument(string name) {
+Argument & ArgumentSet::AddPositionalArgument(string name) {
   Argument * arg = new PositionalArgument(name);
   return Add(arg);
 }
 
 
-Argument * ArgumentSet::AddNamedArgument(string name) {
+Argument & ArgumentSet::AddNamedArgument(string name) {
   Argument * arg = new NamedArgument(name);
   return Add(arg);
 }
